@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/luizffdemoraes/desafio/client-server-api/config"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -32,6 +33,12 @@ type Usdbrl struct {
 }
 
 func main() {
+	// Initialize Configs
+	err := config.Init()
+	if err != nil {
+		panic(err)
+	}
+	
 	http.HandleFunc("/cotacao", BuscaCambioHandler)
 	http.ListenAndServe(":8080", nil)
 }
