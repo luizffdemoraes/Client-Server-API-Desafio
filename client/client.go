@@ -18,9 +18,9 @@ func main() {
 
 	defer file.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
 	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, "GET", "http://localhost:8080", nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", "http://localhost:8080/cotacao", nil)
 	if err != nil {
 		panic(err)
 	}
@@ -34,8 +34,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Println(b)
 
 	io.Copy(os.Stdout, resp.Body)
 

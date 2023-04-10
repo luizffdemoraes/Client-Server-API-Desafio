@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -33,21 +32,20 @@ type Usdbrl struct {
 }
 
 func main() {
-	http.HandleFunc("/", BuscaCambioHandler)
+	http.HandleFunc("/cotacao", BuscaCambioHandler)
 	http.ListenAndServe(":8080", nil)
 }
 
 func BuscaCambioHandler(w http.ResponseWriter, r *http.Request) {
 
 	defer log.Println("Request finalizada")
-	ctx := r.Context()
 
-	if r.URL.Path != "/" {
+	if r.URL.Path != "/cotacao" {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	exchange, error := findExchange(ctx)
+	exchange, error := findExchange()
 	if error != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -57,22 +55,20 @@ func BuscaCambioHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
-	select {
-	case <-time.After(200 * time.Millisecond):
-		log.Println("Request processada com sucesso")
+	log.Println("Request processada com sucesso")
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 
-		json.NewEncoder(w).Encode(exchange.USDBRL.Bid)
+	json.NewEncoder(w).Encode(exchange.USDBRL.Bid)
 
-	case <-ctx.Done():
-		log.Println("Request cancelada pelo cliente.")
-	}
 }
 
-func findExchange(ctx context.Context) (*UsdBrls, error) {
+func findExchange() (*UsdBrls, error) {
 	log.Println("Request iniciada")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, "GET", "https://economia.awesomeapi.com.br/json/last/USD-BRL", nil)
 	if err != nil {
@@ -103,33 +99,27 @@ func persistDataBase(exchange *UsdBrls) error {
 		panic(err)
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+
 	db.AutoMigrate(&Usdbrl{})
 
-	select {
-	case <-time.After(10 * time.Millisecond):
+	// CREATE
+	db.WithContext(ctx).Create(&Usdbrl{
+		Code:       exchange.USDBRL.Code,
+		Codein:     exchange.USDBRL.Codein,
+		Name:       exchange.USDBRL.Name,
+		High:       exchange.USDBRL.High,
+		Low:        exchange.USDBRL.Low,
+		VarBid:     exchange.USDBRL.VarBid,
+		PctChange:  exchange.USDBRL.PctChange,
+		Bid:        exchange.USDBRL.Bid,
+		Ask:        exchange.USDBRL.Ask,
+		Timestamp:  exchange.USDBRL.Timestamp,
+		CreateDate: exchange.USDBRL.CreateDate,
+	})
 
-		// CREATE
-		db.Create(&Usdbrl{
-			Code:       exchange.USDBRL.Code,
-			Codein:     exchange.USDBRL.Codein,
-			Name:       exchange.USDBRL.Name,
-			High:       exchange.USDBRL.High,
-			Low:        exchange.USDBRL.Low,
-			VarBid:     exchange.USDBRL.VarBid,
-			PctChange:  exchange.USDBRL.PctChange,
-			Bid:        exchange.USDBRL.Bid,
-			Ask:        exchange.USDBRL.Ask,
-			Timestamp:  exchange.USDBRL.Timestamp,
-			CreateDate: exchange.USDBRL.CreateDate,
-		})
-
-		// SELECT ALL
-		var usdbrls []Usdbrl
-		db.Find(&usdbrls)
-		for _, usdbrl := range usdbrls {
-			fmt.Println(usdbrl)
-		}
-	}
+	log.Println("Persistencia concluida.")
 
 	return nil
 }
