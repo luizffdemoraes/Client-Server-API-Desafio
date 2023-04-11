@@ -1,8 +1,11 @@
 package config
 
 import (
+	"context"
 	"fmt"
+	"time"
 
+	"github.com/luizffdemoraes/desafio/client-server-api/schemas"
 	"gorm.io/gorm"
 )
 
@@ -26,4 +29,26 @@ func Init() error {
 
 func GetSQLite() *gorm.DB {
 	return db
+}
+
+
+func PersistDataBase(exchange *schemas.UsdBrls) error {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancel()
+
+	// CREATE
+	return db.WithContext(ctx).Create(&schemas.UsdBrl{
+		Code:       exchange.USDBRL.Code,
+		Codein:     exchange.USDBRL.Codein,
+		Name:       exchange.USDBRL.Name,
+		High:       exchange.USDBRL.High,
+		Low:        exchange.USDBRL.Low,
+		VarBid:     exchange.USDBRL.VarBid,
+		PctChange:  exchange.USDBRL.PctChange,
+		Bid:        exchange.USDBRL.Bid,
+		Ask:        exchange.USDBRL.Ask,
+		Timestamp:  exchange.USDBRL.Timestamp,
+		CreateDate: exchange.USDBRL.CreateDate,
+	}).Error
 }
