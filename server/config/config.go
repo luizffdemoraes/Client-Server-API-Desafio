@@ -34,7 +34,7 @@ func PersistDataBase(exchange *schemas.UsdBrls) error {
 
 	// Defining duration
 	// of Nanoseconds method
-	nano, _ := time.ParseDuration("10s")
+	nano, _ := time.ParseDuration("10ms")
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(nano.Nanoseconds()))
 	defer cancel()
