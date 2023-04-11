@@ -37,6 +37,8 @@ func PersistDataBase(exchange *schemas.UsdBrls) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
 	defer cancel()
 
+	db.AutoMigrate(&schemas.UsdBrl{})
+
 	// CREATE
 	return db.WithContext(ctx).Create(&schemas.UsdBrl{
 		Code:       exchange.USDBRL.Code,

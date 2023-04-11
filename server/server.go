@@ -45,8 +45,6 @@ func BuscaCambioHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("Request processada com sucesso")
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
 	json.NewEncoder(w).Encode(exchange.USDBRL.Bid)
 
 }
