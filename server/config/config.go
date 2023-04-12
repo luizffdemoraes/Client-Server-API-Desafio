@@ -34,6 +34,7 @@ func PersistDataBase(exchange *schemas.UsdBrls) error {
 
 	// Defining duration
 	// of Nanoseconds method
+	// Só esta gerando erro de context deadline a partir de 2ms
 	nano, _ := time.ParseDuration("10ms")
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(nano.Nanoseconds()))
@@ -42,7 +43,7 @@ func PersistDataBase(exchange *schemas.UsdBrls) error {
 	db.AutoMigrate(&schemas.UsdBrl{})
 
 	// CREATE
-	return db.WithContext(ctx).Create(&schemas.UsdBrl{
+	result := db.WithContext(ctx).Create(&schemas.UsdBrl{
 		Code:       exchange.USDBRL.Code,
 		Codein:     exchange.USDBRL.Codein,
 		Name:       exchange.USDBRL.Name,
@@ -54,5 +55,11 @@ func PersistDataBase(exchange *schemas.UsdBrls) error {
 		Ask:        exchange.USDBRL.Ask,
 		Timestamp:  exchange.USDBRL.Timestamp,
 		CreateDate: exchange.USDBRL.CreateDate,
-	}).Error
+	})
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
 }
